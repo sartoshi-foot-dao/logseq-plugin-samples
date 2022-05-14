@@ -51,27 +51,31 @@ const deleteBlocks = async (pageNames: Array<string>) => {
   }))
 }
 
-const createBlock = async (uuid, contents) => {
-  return await logseq.Editor.insertBlock(uuid, contents);
+const createBlock = async (uuid, contents, child?) => {
+  return await logseq.Editor.insertBlock(uuid, contents, { sibling: !child });
 }
 
 const getBlock = async (uuid) => {
   return await logseq.Editor.getBlock(uuid);
 }
 
-const writeTweet = async (tweet, dateid) => {
+const writeTweet = async (tweet, dateId) => {
   const page = await getOrCreatePage(tweet.authorName);
   const blockTree = await logseq.Editor.getCurrentPageBlocksTree();
   const tweetsBlock = blockTree.find((block) => block.content === "Tweets");
   let tweetsBlockUuid = null;
   if (!tweetsBlock) {
-    const newTweetBlock = await createBlock(page.uuid, "Tweets");
+    const newTweetBlock = await createBlock(page.uuid, "Tweets", true);
     tweetsBlockUuid = newTweetBlock.uuid;
   } else {
     tweetsBlockUuid = tweetsBlock.uuid;
   }
   
-  console.log({ tweetsBlockUuid });
+  const tweetBlockText = `${tweet.text} ([View Tweet](${tweet.url})) [[${dateId}]]`
+
+  const tweetBlockId = await createBlock(tweetsBlockUuid, tweetBlockText, true);
+  const childId = await createBlock(tweetBlockId.uuid, 'child', true);
+
   return page;
   // const tweetBlockId = getOrCreateBlock(pageId, "Tweets");
 }
@@ -133,8 +137,8 @@ async function main(baseInfo: LSPluginBaseInfo) {
       }
       ];
       // const testTweets = unsyncedTweets.unsyncedDocuments.slice(0, 2);
-      console.log(getDateId());
-      console.log(await writeTweet(unsyncedTweets[0], ""));
+      const dateId = getDateId();
+      console.log(await writeTweet(unsyncedTweets[0], dateId));
     }
   })
 
