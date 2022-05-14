@@ -51,6 +51,10 @@ const deleteBlocks = async (pageNames: Array<string>) => {
   }))
 }
 
+const createBlock = async (uuid, contents) => {
+  return await logseq.Editor.insertBlock(uuid, contents);
+}
+
 // const createPage = async (name) => {
 //   return await logseq.Editor.
 // };
@@ -62,6 +66,23 @@ async function main(baseInfo: LSPluginBaseInfo) {
   const testPages = ['toosting1', 'toosting2', 'toosting3', 'toosting4', 'toosting5'];
 
   logseq.provideModel({
+    async createBlocks() {
+      const blocks = [{
+        content: 'block1', children: [{
+          content: 'child1'
+        }]
+      }, {
+        content: 'block2', children: [{
+          content: 'child2'
+        }]
+      }];
+
+      for (const page of testPages) {
+        const { uuid } = await getPage(page);
+        console.log(await logseq.Editor.insertBatchBlock(uuid, blocks, { sibling: false }))
+        // console.log(await createBlock(uuid, 'block contents'));
+      }
+    },
     async deleteTestPages() {
       await deleteBlocks(testPages);
     },
@@ -80,27 +101,6 @@ async function main(baseInfo: LSPluginBaseInfo) {
       
 
       const createdPages = await createPages(testPages);
-
-      // await deleteBlocks(pages);
-
-      // const page = await getPage('toosting3');
-      // console.log({ page });
-      // await deleteBlock(page.uuid);
-
-      // for (const page of pages) {
-      //   gotoOrCreatePage(page);
-      //   await delay(300);
-      // }
-      // const toosting = await Promise.all(pages.map((page) => {
-      //   return gotoOrCreatePage(page);
-      // }));
-
-      // console.log(toosting);
-
-      
-
-
-
 
       // loading = true
 
@@ -134,13 +134,17 @@ async function main(baseInfo: LSPluginBaseInfo) {
   logseq.App.registerUIItem('toolbar', {
     key: 'logseq-reddit',
     template: `
-      <a style="display: inline-block" data-on-click="createTestPages"
+      <a style="display: inline-block; font-size: small" data-on-click="createTestPages"
          class="button">
         <span>create test pages</span>
       </a>
-      <a style="display: inline-block" data-on-click="deleteTestPages"
+      <a style="display: inline-block; font-size: small" data-on-click="deleteTestPages"
          class="button">
         <span>delete test pages</span>
+      </a>
+      <a style="display: inline-block; font-size: small" data-on-click="createBlocks"
+         class="button">
+        <span>create blocks on pages</span>
       </a>
     `
   })
